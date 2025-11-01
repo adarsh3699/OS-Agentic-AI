@@ -1,23 +1,26 @@
 """
-Multi-Model Loader with Automatic Fallback
-Tries: Groq → Gemini → Local Ollama
+Multi-Model Loader - COST OPTIMIZED
+Intelligent model selection based on task complexity
 """
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
 from langchain_ollama import ChatOllama
 
-from src import config
+from src import config, cost_optimizer
 
 
-def get_model():
+def get_model(query: str = ""):
     """
-    Load AI model with automatic fallback.
+    Load AI model with intelligent selection and fallback.
 
-    Order:
-    1. Groq (llama-3.3-70b) - Fast, powerful, free
-    2. Gemini (2.0-flash-exp) - Google, reliable
-    3. Ollama (llama3.1:8b) - Local backup
+    Automatically selects optimal model tier based on task:
+    - Simple tasks → Small/Fast model (saves cost)
+    - Standard tasks → Medium model (balanced)
+    - Complex tasks → Large model (best reasoning)
+
+    Args:
+        query: User query (for intelligent selection)
 
     Returns:
         LLM instance ready to use
@@ -25,17 +28,22 @@ def get_model():
     errors = []
 
     for provider in config.FALLBACK_ORDER:
+        # Check rate limits
+        if not cost_optimizer.check_rate_limit(provider):
+            print(f"⏱️  Rate limit reached for {provider}, trying next...")
+            continue
+
         try:
             if provider == "groq":
-                print("🚀 Loading: Groq Llama 3.3 70B...")
-                return _load_groq()
+                print("🚀 Loading: Groq...")
+                return _load_groq(query)
 
             elif provider == "gemini":
-                print("🔷 Loading: Google Gemini 2.0 Flash...")
-                return _load_gemini()
+                print("🔷 Loading: Gemini...")
+                return _load_gemini(query)
 
             elif provider == "ollama":
-                print("🏠 Loading: Local Llama 3.1 8B...")
+                print("🏠 Loading: Local Ollama...")
                 return _load_ollama()
 
         except Exception as e:
@@ -44,66 +52,81 @@ def get_model():
             print(f"⚠️  {error_msg}")
             continue
 
-    # If all fail, show errors and use local as last resort
+    # If all fail, use local as last resort
     print("\n❌ All API providers failed!")
     for error in errors:
         print(f"   - {error}")
     print("\n🏠 Using local Ollama (limited capability)...\n")
-    return ChatOllama(model=config.LOCAL_MODEL)
+    return ChatOllama(model=config.MODEL_TIERS[config.DEFAULT_TIER]["ollama"])
 
 
-def _load_groq():
-    """Load Groq model"""
+def _load_groq(query: str = ""):
+    """Load Groq with intelligent model selection"""
     if not config.GROQ_API_KEY:
         raise ValueError("GROQ_API_KEY not set")
 
+    # Select optimal model based on task
+    model = cost_optimizer.get_optimal_model(query, "groq")
+
     llm = ChatGroq(
-        model=config.GROQ_MODEL,
+        model=model,
         api_key=config.GROQ_API_KEY,
-        temperature=0.1,  # Lower = more focused
+        temperature=0.1,
+        max_tokens=config.MAX_TOKENS_PER_REQUEST,
     )
 
     # Test connection
     llm.invoke("test")
 
     print(f"✅ {config.MODEL_INFO['groq']['name']}")
+    print(f"   Model: {model}")
     print(f"   Speed: {config.MODEL_INFO['groq']['speed']}")
-    print(f"   Reasoning: {config.MODEL_INFO['groq']['reasoning']}")
-    print(f"   Cost: {config.MODEL_INFO['groq']['cost']}\n")
+    print(f"   Cost: {config.MODEL_INFO['groq']['cost']}")
+    if config.ENABLE_CACHING:
+        print("   💾 Caching: ENABLED")
+    print()
 
     return llm
 
 
-def _load_gemini():
-    """Load Gemini model"""
+def _load_gemini(query: str = ""):
+    """Load Gemini with intelligent model selection"""
     if not config.GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY not set")
 
+    # Select optimal model
+    model = cost_optimizer.get_optimal_model(query, "gemini")
+
     llm = ChatGoogleGenerativeAI(
-        model=config.GEMINI_MODEL,
+        model=model,
         google_api_key=config.GEMINI_API_KEY,
         temperature=0.1,
+        max_tokens=config.MAX_TOKENS_PER_REQUEST,
     )
 
     # Test connection
     llm.invoke("test")
 
     print(f"✅ {config.MODEL_INFO['gemini']['name']}")
+    print(f"   Model: {model}")
     print(f"   Speed: {config.MODEL_INFO['gemini']['speed']}")
-    print(f"   Reasoning: {config.MODEL_INFO['gemini']['reasoning']}")
-    print(f"   Cost: {config.MODEL_INFO['gemini']['cost']}\n")
+    print(f"   Cost: {config.MODEL_INFO['gemini']['cost']}")
+    if config.ENABLE_CACHING:
+        print("   💾 Caching: ENABLED")
+    print()
 
     return llm
 
 
 def _load_ollama():
-    """Load local Ollama model"""
-    llm = ChatOllama(model=config.LOCAL_MODEL)
+    """Load local Ollama"""
+    model = config.MODEL_TIERS[config.DEFAULT_TIER]["ollama"]
+    llm = ChatOllama(model=model)
 
     print(f"✅ {config.MODEL_INFO['ollama']['name']}")
+    print(f"   Model: {model}")
     print(f"   Speed: {config.MODEL_INFO['ollama']['speed']}")
-    print(f"   Reasoning: {config.MODEL_INFO['ollama']['reasoning']}")
     print(f"   Cost: {config.MODEL_INFO['ollama']['cost']}")
-    print("   ⚠️  Note: Limited capability for complex tasks\n")
+    print("   ⚠️  Limited capability for complex tasks\n")
 
     return llm
