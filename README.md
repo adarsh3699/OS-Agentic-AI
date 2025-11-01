@@ -1,6 +1,14 @@
 # AI OS Agent Project
 
-This is a local AI agent that controls your computer's mouse, keyboard, files, and apps via natural language commands. It runs on Python and uses Ollama for the AI brain.
+This is a local AI agent that controls your computer's mouse, keyboard, files, apps, and **executes any terminal command** via natural language. It runs on Python and uses Ollama for the AI brain.
+
+## Key Features
+- 🖱️ **Mouse & Keyboard Control**: Move, click, type with human-like movements
+- 📂 **File Operations**: Search, create folders, manage files
+- 🚀 **App Launcher**: Open any application
+- 🌐 **Web Browser**: Open URLs automatically
+- 💻 **Terminal Commands**: Execute ANY safe terminal command (mkdir, ls, python scripts, git, etc.)
+- 🛡️ **Safety First**: Blocks dangerous commands (rm -rf, shutdown, etc.)
 
 ## Requirements
 - Python 3.10+ (download from python.org)
@@ -30,6 +38,65 @@ This is a local AI agent that controls your computer's mouse, keyboard, files, a
 
 8. Download the AI model: In Terminal/Command Prompt, run `ollama pull llama3.1:8b` (supports tool calling; ~4-5GB download).
 
-9. (Optional) For Windows/Linux tweaks:
-   - In `agent_tools.py`, change `subprocess.run(['open', '-a', app_name])` to cross-platform code. Add at top: `import platform`
-   - Then in `open_app` tool:
+9. Run the agent: `python main_agent.py`
+
+10. Start commanding! Type things like:
+    - "Move mouse to 500, 300 and click"
+    - "Open Chrome"
+    - "Create a folder called test_project"
+    - "List all Python files in the current directory"
+    - "Run git status"
+
+## Example Commands
+
+### Mouse & GUI Control
+- "Move the mouse to coordinates 800, 400"
+- "Click the left mouse button"
+- "Double click at current position"
+
+### File & Folder Operations
+- "Create a new folder called my_project"
+- "List all files in the current directory"
+- "Search for config.json file"
+- "Show me the contents of README.md"
+
+### Application Control
+- "Open Safari"
+- "Launch Visual Studio Code"
+- "Open the Calculator app"
+
+### Terminal Commands (NEW!)
+- "Create a folder called data"
+- "List all Python files with ls *.py"
+- "Check git status"
+- "Run my python script with python my_script.py"
+- "Show current directory with pwd"
+- "Copy file.txt to backup/file.txt"
+
+### Web Browsing
+- "Open google.com"
+- "Go to github.com"
+
+## Safety Features
+The agent blocks dangerous commands including:
+- `rm -rf` (recursive delete)
+- `sudo rm` (delete with admin rights)
+- `shutdown`, `reboot`, `halt` (system power commands)
+- `mkfs`, `dd` (disk formatting)
+- `chmod -r 777 /` (permission changes)
+- Fork bombs and other destructive commands
+
+## How It Works
+1. You type a natural language command
+2. The AI (Llama 3.1) decides which tools to use
+3. Tools execute safely with error handling
+4. Results are shown with feedback
+5. The agent remembers context for follow-up commands
+
+## Troubleshooting
+- **Mouse not moving?** Grant accessibility permissions (see Requirements)
+- **Ollama not found?** Make sure Ollama is installed and running
+- **Command blocked?** The safety filter is protecting you from dangerous commands
+- **Tool errors?** Check the error message - it usually tells you what's wrong
+
+Type `exit` to quit the agent.

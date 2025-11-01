@@ -5,3 +5,4 @@ pyautogui
 pynput
 numpy
 scipy
+prompt_toolkit
