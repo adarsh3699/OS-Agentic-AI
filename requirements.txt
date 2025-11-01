@@ -1,0 +1,7 @@
+langchain
+langgraph
+langchain-ollama
+pyautogui
+pynput
+numpy
+scipy
