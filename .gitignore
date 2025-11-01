@@ -105,3 +105,20 @@ Temporary Items
 *.sqlite
 *.sqlite3
 
+# Linting and Type Checking
+.ruff_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# API Keys and Configuration (keep sensitive data out of git)
+src/config.py
+config.py
+
+# AI Memory (user-specific)
+.ai_robot_memory.json
+
+# Screenshots
+*.png
+!docs/*.png
+

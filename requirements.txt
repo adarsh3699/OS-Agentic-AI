@@ -1,8 +1,14 @@
 langchain
 langgraph
 langchain-ollama
+langchain-google-genai
+langchain-groq
 pyautogui
 pynput
 numpy
 scipy
 prompt_toolkit
+
+# Development dependencies
+ruff
+mypy
