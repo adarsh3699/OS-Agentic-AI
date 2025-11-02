@@ -26,7 +26,6 @@ from src.agent_tools import (
     type_text,
     verify_expectations,
 )
-from src.model_loader import get_model
 
 # AGENTIC AI SYSTEM PROMPT - SIMPLIFIED FOR RELIABILITY
 SYSTEM_PROMPT = """You are a RELIABLE AI assistant. You do ONE action at a time and verify it worked.
@@ -140,34 +139,39 @@ tools = [
     get_screen_info,  # Debugging
 ]
 
+
 def main():
     """Main entry point for the AI Robot agent"""
 
     # Load AI model with automatic fallback (Groq → Gemini → Local)
     print("🔧 Initializing AI Model...")
     print("=" * 70)
-    llm = get_model()
+
+    from src.model_switcher import DynamicModelSwitcher
+
+    model_switcher = DynamicModelSwitcher()
+    llm = model_switcher.get_model()
     print("=" * 70)
 
     # Memory to remember past actions (helps with feedback)
     memory = MemorySaver()
 
-    # The agent with built-in loop for feedback and errors + agentic system prompt
-    agent_executor = create_react_agent(llm, tools, checkpointer=memory)
-
-    # Config for the session (like a conversation ID)
-    config = {"configurable": {"thread_id": "my-robot-thread"}}
+    # Config for the session (like a conversation ID + recursion limit)
+    config = {
+        "configurable": {"thread_id": "my-robot-thread"},
+        "recursion_limit": 50,  # Increased from default 25 for complex tasks
+    }
 
     # Create a prompt session with history support for arrow key navigation
     session = PromptSession(history=InMemoryHistory())
 
     print("=" * 70)
-    print("🤖 CURSOR-STYLE AI - v2.1 (COST OPTIMIZED)")
+    print("🤖 CURSOR-STYLE AI - v2.2 (AUTO-SWITCHING)")
     print("=" * 70)
-    print("\n🎯 NEW: INTELLIGENT MODEL SELECTION")
+    print("\n🎯 NEW: DYNAMIC PROVIDER SWITCHING")
+    print("   🔄 Auto-switches providers on rate limits (Groq→Gemini→Local)")
     print("   💰 Auto-selects optimal model (8B/11B/70B) per task")
     print("   💾 Caches responses for 5 minutes (FREE repeats!)")
-    print("   📊 Tracks cost savings in real-time")
     print("   ⚡ 50-70% cost reduction with ZERO accuracy loss")
     print("\n🎯 STEP-BY-STEP VERIFICATION (Like Cursor AI)")
     print("   ✅ Verifies EVERY action before proceeding")
@@ -179,19 +183,20 @@ def main():
     print("   💾 Persistent Memory - Learns across sessions")
     print("   🔧 Error Recovery - 5+ fallback strategies")
     print("   🔍 Multi-Level Verification - Confirms every change")
+    print("   🔄 Runtime Provider Switching - Never crashes on rate limits!")
     print("\n📊 System:")
     print("   • 20 Professional Tools")
-    print("   • Multi-Model: Groq → Gemini → Local")
+    print("   • Multi-Model: Groq → Gemini → Local (auto-switch!)")
     print("   • Memory: ~/.ai_robot_memory.json")
-    print("   • Mode: COST OPTIMIZED + VERIFIED ✅")
+    print("   • Mode: AUTO-SWITCHING + COST OPTIMIZED ✅")
     print("\n💡 Watch Me Work:")
     print("   • I'll show: Create folder → ✅ Verify → Move files → ✅ Verify")
     print("   • I'll auto-select the right model size for each task")
-    print("   • I'll cache repeated queries (instant + FREE)")
+    print("   • If rate limited, I'll switch providers mid-task (no crash!)")
     print("   • Type 'exit' to quit")
     print("\n" + "=" * 70)
     print("\n🧪 Test With: 'Organize my Desktop by file type'")
-    print("   (Watch me verify EACH step + see cost optimization!)")
+    print("   (Watch me handle rate limits gracefully!)")
     print("=" * 70 + "\n")
 
     while True:
@@ -217,27 +222,71 @@ def main():
             {"role": "user", "content": prompt},
         ]
 
-        for chunk in agent_executor.stream({"messages": messages}, config):
-            # Show agent node execution
-            if "agent" in chunk:
-                messages = chunk["agent"]["messages"]
-                for msg in messages:
-                    # AI thinking/response
-                    if hasattr(msg, "content") and msg.content:
-                        print(f"💭 AI Thinking: {msg.content}")
+        # Retry with provider switching on rate limit errors
+        max_retries = 3
+        retry_count = 0
 
-                    # Tool calls
-                    if hasattr(msg, "tool_calls") and msg.tool_calls:
-                        for tool_call in msg.tool_calls:
-                            tool_name = tool_call.get("name", "unknown")
-                            tool_args = tool_call.get("args", {})
-                            print(f"🔧 Calling Tool: {tool_name}({tool_args})")
+        while retry_count < max_retries:
+            try:
+                # Recreate agent with current model
+                agent_executor = create_react_agent(llm, tools, checkpointer=memory)
 
-            # Show tool execution results
-            if "tools" in chunk:
-                messages = chunk["tools"]["messages"]
-                for msg in messages:
-                    if hasattr(msg, "content"):
-                        print(f"✅ Tool Result: {msg.content}")
+                for chunk in agent_executor.stream({"messages": messages}, config):
+                    # Show agent node execution
+                    if "agent" in chunk:
+                        agent_messages = chunk["agent"]["messages"]
+                        for msg in agent_messages:
+                            # AI thinking/response
+                            if hasattr(msg, "content") and msg.content:
+                                print(f"💭 AI Thinking: {msg.content}")
 
-        print("\n✨ Task completed!\n")
+                            # Tool calls
+                            if hasattr(msg, "tool_calls") and msg.tool_calls:
+                                for tool_call in msg.tool_calls:
+                                    tool_name = tool_call.get("name", "unknown")
+                                    tool_args = tool_call.get("args", {})
+                                    print(f"🔧 Calling Tool: {tool_name}({tool_args})")
+
+                    # Show tool execution results
+                    if "tools" in chunk:
+                        tool_messages = chunk["tools"]["messages"]
+                        for msg in tool_messages:
+                            if hasattr(msg, "content"):
+                                print(f"✅ Tool Result: {msg.content}")
+
+                print("\n✨ Task completed!\n")
+                break  # Success!
+
+            except Exception as e:
+                error_str = str(e)
+
+                # Check if it's a rate limit error
+                if (
+                    "rate" in error_str.lower()
+                    or "429" in error_str
+                    or "quota" in error_str.lower()
+                ):
+                    retry_count += 1
+                    if retry_count < max_retries:
+                        print("\n⚠️  Rate limit error detected!")
+                        print(
+                            f"🔄 Switching to backup provider... (Attempt {retry_count}/{max_retries})"
+                        )
+
+                        # Switch to next provider
+                        llm = model_switcher.switch_provider(error_str)
+
+                        if llm is None:
+                            print("\n❌ All providers exhausted. Please try again later.")
+                            break
+
+                        print("✅ Switched successfully! Retrying task...\n")
+                        continue
+                    else:
+                        print(f"\n❌ Max retries reached. Error: {e}")
+                        print("💡 All AI providers are rate limited. Wait or try again later.")
+                        break
+                else:
+                    # Non-rate-limit error, show and exit
+                    print(f"\n❌ Error: {e}")
+                    break

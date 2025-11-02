@@ -203,9 +203,7 @@ def check_rate_limit(provider: str) -> bool:
     minute_ago = current_time - 60
 
     # Remove old requests
-    _request_times[provider] = [
-        t for t in _request_times[provider] if t > minute_ago
-    ]
+    _request_times[provider] = [t for t in _request_times[provider] if t > minute_ago]
 
     # Check limit
     if len(_request_times[provider]) >= config.RATE_LIMITS[provider]:
@@ -282,11 +280,7 @@ def get_usage_stats() -> dict:
 def print_usage_stats():
     """Print cost savings summary"""
     stats = get_usage_stats()
-    cache_rate = (
-        (stats["cached_hits"] / stats["requests"] * 100)
-        if stats["requests"] > 0
-        else 0
-    )
+    cache_rate = (stats["cached_hits"] / stats["requests"] * 100) if stats["requests"] > 0 else 0
 
     print("\n" + "=" * 70)
     print("💰 COST OPTIMIZATION SUMMARY")
@@ -296,4 +290,3 @@ def print_usage_stats():
     print(f"Tokens Saved: ~{stats['tokens_saved']:,}")
     print(f"API Calls Saved: {stats['cached_hits']}")
     print("=" * 70)
-
