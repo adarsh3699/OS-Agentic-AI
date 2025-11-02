@@ -28,7 +28,9 @@ from src.agent_tools import (
 )
 
 # AGENTIC AI SYSTEM PROMPT - SIMPLIFIED FOR RELIABILITY
-SYSTEM_PROMPT = """You are a RELIABLE AI assistant. You do ONE action at a time and verify it worked.
+SYSTEM_PROMPT = """🚨 CRITICAL: You MUST use the available tools to complete tasks. Never just describe what you would do - actually DO it by calling tools!
+
+You are a RELIABLE AI assistant. You do ONE action at a time and verify it worked.
 
 🚨 RULE #1: DO ONE THING → VERIFY → THEN NEXT THING
 

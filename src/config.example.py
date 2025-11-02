@@ -1,5 +1,7 @@
 """
-AI Model Configuration - Example Template
+AI Model Configuration - OPTIMIZED FOR COST EFFICIENCY
+Intelligent model selection based on task complexity
+
 Copy this file to config.py and add your API keys
 """
 
@@ -12,17 +14,57 @@ GEMINI_API_KEY = ""  # Get from: makersuite.google.com
 
 
 # ============================================================================
-# MODEL SELECTION
+# INTELLIGENT MODEL TIERS (Auto-select based on task complexity)
 # ============================================================================
 
-# Primary: Groq (Fast, free, powerful)
-GROQ_MODEL = "llama-3.3-70b-versatile"  # Best reasoning model
+MODEL_TIERS = {
+    # Small/Fast - Simple tasks (file listing, basic commands)
+    "small": {
+        "groq": "llama-3.1-8b-instant",  # Ultra-fast, 30/min
+        "gemini": "gemini-2.0-flash",  # ✅ WORKS with tools! 200 RPD
+        "ollama": "qwen2.5:14b",  # Local backup - Much smarter!
+        "use_for": ["list", "check", "simple_command"],
+    },
+    # Medium - Standard tasks (file organization, multi-step)
+    "medium": {
+        "groq": "llama-3.3-70b-versatile",  # Best model, 30/min (prioritize!)
+        "gemini": "gemini-2.0-flash",  # ✅ ACTUALLY USES TOOLS! 200 RPD
+        "ollama": "qwen2.5:14b",  # Smart local fallback
+        "use_for": ["organize", "move", "create", "verify"],
+    },
+    # Large - Complex reasoning (debugging, error recovery)
+    "large": {
+        "groq": "llama-3.3-70b-versatile",  # Most capable, 30/min
+        "gemini": "gemini-2.0-flash",  # ✅ Tool calling works! 200 RPD
+        "ollama": "qwen2.5:14b",  # Intelligent local model
+        "use_for": ["debug", "complex", "multi_tool"],
+    },
+}
 
-# Fallback: Gemini (Google, reliable)
-GEMINI_MODEL = "gemini-2.0-flash-exp"  # Latest experimental model
+# Default tier for unknown tasks
+DEFAULT_TIER = "medium"
 
-# Final Fallback: Local Ollama
-LOCAL_MODEL = "llama3.1:8b"  # Offline backup
+
+# ============================================================================
+# COST OPTIMIZATION SETTINGS
+# ============================================================================
+
+# Enable intelligent model selection (use smaller models when possible)
+ENABLE_SMART_SELECTION = True
+
+# Enable response caching (avoid duplicate API calls)
+ENABLE_CACHING = True
+CACHE_TTL_SECONDS = 300  # 5 minutes
+
+# Maximum tokens per request (prevent excessive costs)
+MAX_TOKENS_PER_REQUEST = 2000
+
+# Rate limiting (requests per minute)
+RATE_LIMITS = {
+    "groq": 30,  # Free tier: 30 req/min, 100k tokens/day
+    "gemini": 15,  # Free tier: 15 req/min, 200 req/day (gemini-2.0-flash)
+    "ollama": 999,  # No limit (local)
+}
 
 
 # ============================================================================
@@ -30,14 +72,14 @@ LOCAL_MODEL = "llama3.1:8b"  # Offline backup
 # ============================================================================
 
 FALLBACK_ORDER = [
-    "groq",  # Try Groq first (fastest, most capable)
-    "gemini",  # Fall back to Gemini
-    "ollama",  # Final fallback to local
+    "groq",  # Primary: Fastest free tier (when available)
+    "gemini",  # Fallback: Gemini 2.0 Flash - WORKS with tools! ✅
+    "ollama",  # Last resort: LOCAL - Always works! (Qwen 2.5 14B)
 ]
 
 
 # ============================================================================
-# MODEL CAPABILITIES
+# MODEL CAPABILITIES & COSTS
 # ============================================================================
 
 MODEL_INFO = {
@@ -45,19 +87,32 @@ MODEL_INFO = {
         "name": "Groq Llama 3.3 70B",
         "speed": "⚡⚡⚡⚡",
         "reasoning": "⭐⭐⭐⭐⭐",
-        "cost": "FREE (30 req/min)",
+        "cost": "FREE (30 req/min, 100k tokens/day)",
+        "rpm": 30,  # Requests per minute
     },
     "gemini": {
         "name": "Google Gemini 2.0 Flash",
-        "speed": "⚡⚡⚡",
+        "speed": "⚡⚡⚡⚡",
         "reasoning": "⭐⭐⭐⭐⭐",
-        "cost": "FREE (15 req/min)",
+        "cost": "FREE (15 req/min, 200 req/day)",
+        "rpm": 15,  # 2.0 - Actually works with tool calling! ✅
     },
     "ollama": {
-        "name": "Local Llama 3.1 8B",
-        "speed": "⚡⚡",
-        "reasoning": "⭐⭐",
-        "cost": "FREE (offline)",
+        "name": "Local Qwen 2.5 14B",
+        "speed": "⚡⚡⚡",
+        "reasoning": "⭐⭐⭐⭐",
+        "cost": "FREE (offline, unlimited)",
+        "rpm": 999,
     },
 }
 
+
+# ============================================================================
+# PROMPT OPTIMIZATION
+# ============================================================================
+
+# Use compressed prompts (fewer tokens = lower cost)
+USE_COMPRESSED_PROMPTS = True
+
+# Remove verbose examples from system prompt
+MINIMAL_PROMPTS = True
