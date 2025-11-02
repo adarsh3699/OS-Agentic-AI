@@ -27,92 +27,134 @@ from src.agent_tools import (
     verify_expectations,
 )
 
-# AGENTIC AI SYSTEM PROMPT - SIMPLIFIED FOR RELIABILITY
-SYSTEM_PROMPT = """🚨 CRITICAL: You MUST use the available tools to complete tasks. Never just describe what you would do - actually DO it by calling tools!
+# ============================================================================
+# SYSTEM PROMPTS - Different prompts for different model types
+# ============================================================================
 
-You are a RELIABLE AI assistant. You do ONE action at a time and verify it worked.
+# SIMPLIFIED PROMPT FOR LOCAL MODELS (Ollama) - Short and direct
+LOCAL_MODEL_PROMPT = """You are an AI assistant that CALLS TOOLS to complete tasks.
 
-🚨 RULE #1: DO ONE THING → VERIFY → THEN NEXT THING
+CRITICAL RULES:
+1. ALWAYS use ~/Desktop for Desktop path (NEVER use /path/to/Desktop)
+2. GROUP related file types (Images: jpg+jpeg+png, Documents: pdf+doc+txt)
+3. BATCH commands - create all folders at once, move files with &&
+4. Call 3-5 tools total, then STOP
 
-Example - Organizing Desktop:
-WRONG ❌: Try to do everything at once, call wrong tools
-RIGHT ✅: Do steps slowly, one by one
+🧠 SMART FILE GROUPING:
+- Images/ → .jpg, .jpeg, .png, .gif, .bmp
+- Documents/ → .pdf, .doc, .docx, .txt
+- Videos/ → .mp4, .mov, .avi, .mkv
+- Audio/ → .mp3, .wav, .flac
 
-📋 CORRECT TOOL USAGE (COPY THESE EXACTLY):
+Example Task: "Organize Desktop"
+Step 1: list_directory("~/Desktop") → see: file.jpg, pic.jpeg, doc.pdf
+Step 2: execute_terminal_command("mkdir ~/Desktop/Images ~/Desktop/Documents")
+Step 3: execute_terminal_command("mv ~/Desktop/*.jpg ~/Desktop/Images && mv ~/Desktop/*.jpeg ~/Desktop/Images && mv ~/Desktop/*.pdf ~/Desktop/Documents")
+Step 4: STOP and say "Done! Organized into Images and Documents"
 
-1. To see files in a folder:
-   list_directory("~/Desktop")
+Available tools:
+- list_directory(directory_path="~/Desktop")
+- execute_terminal_command(command="mkdir ~/Desktop/folder")
+- read_file_content(filepath="~/file.txt")
+- get_current_directory()
+- open_app(app_name="Chrome")
+- open_url(url="https://...")"""
 
-2. To run terminal commands (mkdir, mv, ls, etc):
-   execute_terminal_command("mkdir ~/Desktop/Photos")
-   execute_terminal_command("mv ~/Desktop/*.jpg ~/Desktop/Photos/")
+# FULL PROMPT FOR CLOUD MODELS (Groq/Gemini) - Detailed with examples
+SYSTEM_PROMPT = """🚨 CRITICAL RULES:
 
-3. To verify something worked:
-   list_directory("~/Desktop/Photos")  # See if files are there
+1. PLAN FIRST - Analyze the task, group related operations
+2. BATCH OPERATIONS - Combine similar actions into single commands
+3. USE SMART CATEGORIES - Group related file types logically
+4. VERIFY ONCE - Check results at the end, not after every step
 
-🎯 ORGANIZING DESKTOP FILES - EXACT STEPS:
+🧠 INTELLIGENT FILE CATEGORIZATION:
 
-Step 1: list_directory("~/Desktop")
-→ Look at output, count files by type
+When organizing files, USE SMART CATEGORIES (not one folder per extension):
 
-Step 2: execute_terminal_command("mkdir ~/Desktop/Photos")
-→ Creates Photos folder
+✅ SMART GROUPING:
+- Images/ → .jpg, .jpeg, .png, .gif, .bmp, .svg, .webp
+- Documents/ → .pdf, .doc, .docx, .txt, .rtf, .odt
+- Videos/ → .mp4, .mov, .avi, .mkv, .webm, .flv
+- Audio/ → .mp3, .wav, .flac, .aac, .ogg, .m4a
+- Archives/ → .zip, .rar, .7z, .tar, .gz
 
-Step 3: list_directory("~/Desktop")
-→ Verify Photos/ folder exists in the list
+❌ WRONG: Create JPG/, JPEG/, PNG/ (too many folders!)
+✅ RIGHT: Create Images/ for all image formats
 
-Step 4: execute_terminal_command("mv ~/Desktop/*.jpg ~/Desktop/Photos/")
-→ Move JPG files
+⚡ UNIVERSAL OPTIMIZATION PRINCIPLES:
 
-Step 5: list_directory("~/Desktop/Photos")
-→ Verify JPG files are inside Photos folder
+For ANY task, follow this pattern:
+1. GATHER INFO - Call tools to see current state
+2. PLAN - Decide what needs to happen
+3. BATCH - Combine related operations
+4. EXECUTE - Run batched commands
+5. VERIFY - Check final result
 
-Step 6: list_directory("~/Desktop")
-→ Verify JPG files are GONE from Desktop
+Examples: 
 
-Step 7: Repeat for other file types (PDF, MP4, PNG, etc.)
+📁 File Organization:
+1. list_directory once → see all files
+2. Group by category (Images, Documents, etc)
+3. mkdir all folders in one command
+4. mv all files with && chains
+5. verify once
 
-⚠️ CRITICAL RULES:
+📝 Multi-file Processing:
+1. list_directory → find target files
+2. Plan operations (read, modify, write)
+3. Batch process with loops/scripts
+4. Execute combined command
+5. verify results
 
-1. ALWAYS use execute_terminal_command() for mkdir and mv commands
-2. ALWAYS verify with list_directory() after each action
-3. Create ONE folder at a time
-4. Move ONE file type at a time
-5. Verify BEFORE moving to next step
+🔍 Search & Replace:
+1. search_file → find targets
+2. Plan all replacements
+3. Batch with sed/awk commands
+4. Execute once
+5. verify changes
 
-❌ WRONG:
-list_directory({"command": "mkdir ~/Desktop/Photos"})  # WRONG TOOL!
+You are an INTELLIGENT AI assistant. You GROUP logically, BATCH efficiently, and VERIFY once.
 
-✅ CORRECT:
-execute_terminal_command("mkdir ~/Desktop/Photos")  # RIGHT TOOL!
+📋 BATCHING COMMANDS:
+
+Use shell operators to combine commands:
+- `&&` - Run commands in sequence: "mkdir folder && mv files folder"
+- Multiple args - Create multiple folders: "mkdir folder1 folder2 folder3"
+
+Example:
+❌ SLOW: 3 separate calls
+  execute_terminal_command("mkdir ~/Desktop/Photos")
+  execute_terminal_command("mkdir ~/Desktop/Documents")
+  execute_terminal_command("mkdir ~/Desktop/Videos")
+
+✅ FAST: 1 combined call
+  execute_terminal_command("mkdir ~/Desktop/Photos ~/Desktop/Documents ~/Desktop/Videos")
+
+⚠️ TOOL USAGE RULES:
+
+1. Use execute_terminal_command() for mkdir, mv, cp, rm
+2. Use list_directory() to see folder contents
+3. BATCH commands when possible (mkdir multiple folders at once)
+4. Verify ONCE at the end, not after every step
 
 🧰 AVAILABLE TOOLS:
 
-**File & Directory:**
-- list_directory(directory_path) - See what's in a folder
-- execute_terminal_command(command) - Run mkdir, mv, ls, etc.
-- read_file_content(filepath) - Read file contents
+**File Operations (Most Used):**
+- list_directory(directory_path) - See folder contents
+- execute_terminal_command(command) - Run ANY shell command (mkdir, mv, etc)
+- read_file_content(filepath) - Read files
 
-**Verification:**
-- verify_expectations(what_to_verify, verification_commands)
-- self_critique(original_task, actions_summary, expected_outcome)
+**Computer Control:**
+- move_mouse, click_mouse, type_text, press_key
+- open_app, open_url, check_running_apps
 
-**Other:**
-- Computer: move_mouse, click_mouse, type_text, press_key
-- Apps: open_app, open_url, check_running_apps
-- Memory: recall_from_memory, save_to_memory
-- Debug: debug_last_error, take_screenshot
+**Advanced:**
+- Memory: save_to_memory, recall_from_memory
+- Debug: take_screenshot, debug_last_error
+- Verification: verify_expectations, self_critique
 
-🎯 SIMPLE RULES:
-
-1. Do ONE action
-2. Verify it worked
-3. Then do next action
-4. Don't call 10 tools at once
-
-That's it!
-
-Work slowly, verify each step, and you'll succeed. 🎯"""
+Work efficiently, batch operations, and verify once at the end. 🎯"""
 
 # List of all tools (20 total - Professional Grade!)
 tools = [
@@ -141,6 +183,18 @@ tools = [
     get_screen_info,  # Debugging
 ]
 
+# Simplified tool list for local models (remove memory tools that confuse them)
+local_tools = [
+    # File operations (core tools only)
+    list_directory,
+    execute_terminal_command,
+    read_file_content,
+    get_current_directory,
+    # Computer control (basic only)
+    open_app,
+    open_url,
+]
+
 
 def main():
     """Main entry point for the AI Robot agent"""
@@ -159,9 +213,10 @@ def main():
     memory = MemorySaver()
 
     # Config for the session (like a conversation ID + recursion limit)
+    # Note: High enough for complex multi-step tasks with verification
     config = {
         "configurable": {"thread_id": "my-robot-thread"},
-        "recursion_limit": 50,  # Increased from default 25 for complex tasks
+        "recursion_limit": 50,  # Allows complex tasks with verification (e.g., organize 5+ file types)
     }
 
     # Create a prompt session with history support for arrow key navigation
@@ -196,6 +251,11 @@ def main():
     print("   • I'll auto-select the right model size for each task")
     print("   • If rate limited, I'll switch providers mid-task (no crash!)")
     print("   • Type 'exit' to quit")
+    print("\n💡 Manual Model Switching:")
+    print("   • 'switch to local' - Use local Ollama model")
+    print("   • 'switch to groq' - Use Groq API")
+    print("   • 'switch to gemini' - Use Gemini API")
+    print("   • 'show model' - See current model")
     print("\n" + "=" * 70)
     print("\n🧪 Test With: 'Organize my Desktop by file type'")
     print("   (Watch me handle rate limits gracefully!)")
@@ -210,6 +270,67 @@ def main():
         if prompt.lower() == "exit":
             print("👋 Goodbye!")
             break
+        
+        # Handle manual model switching commands
+        prompt_lower = prompt.lower().strip()
+        
+        if "switch to local" in prompt_lower or "use local" in prompt_lower:
+            print("\n🔄 Manually switching to Local (Ollama)...\n")
+            llm = model_switcher._try_load_provider("ollama", "", switching=True)
+            if llm:
+                print("✅ Now using Local Ollama model!\n")
+            continue
+        
+        elif "switch to groq" in prompt_lower or "use groq" in prompt_lower:
+            print("\n🔄 Manually switching to Groq...\n")
+            llm = model_switcher._try_load_provider("groq", "", switching=True)
+            if llm:
+                print("✅ Now using Groq model!\n")
+            continue
+        
+        elif "switch to gemini" in prompt_lower or "use gemini" in prompt_lower:
+            print("\n🔄 Manually switching to Gemini...\n")
+            llm = model_switcher._try_load_provider("gemini", "", switching=True)
+            if llm:
+                print("✅ Now using Gemini model!\n")
+            continue
+        
+        elif "show model" in prompt_lower or "current model" in prompt_lower or "which model" in prompt_lower:
+            current = model_switcher.current_provider
+            if current:
+                info = config.MODEL_INFO[current]
+                tier = config.DEFAULT_TIER
+                model_name = config.MODEL_TIERS[tier][current]
+                print(f"\n📊 Current Model:")
+                print(f"   Provider: {current.upper()}")
+                print(f"   Name: {info['name']}")
+                print(f"   Model: {model_name}")
+                print(f"   Cost: {info['cost']}")
+                print()
+            else:
+                print("\n⚠️  No model loaded yet\n")
+            continue
+        
+        elif prompt_lower in ["help", "commands", "?", "help me"]:
+            print("\n" + "=" * 70)
+            print("📋 AVAILABLE COMMANDS")
+            print("=" * 70)
+            print("\n🔄 Model Switching:")
+            print("   • switch to local   - Use local Ollama (llama3.1:8b)")
+            print("   • switch to groq    - Use Groq API (fast)")
+            print("   • switch to gemini  - Use Gemini API (reliable)")
+            print("   • show model        - Show current model info")
+            print("\n💡 General:")
+            print("   • help              - Show this help message")
+            print("   • exit              - Quit the application")
+            print("\n🤖 AI Tasks (examples):")
+            print("   • Organize my Desktop by file type")
+            print("   • List files in my Downloads")
+            print("   • Move all PDFs to Documents")
+            print("   • Open Chrome browser")
+            print("=" * 70 + "\n")
+            continue
+        
         if not all(
             danger.lower() not in prompt.lower() for danger in DANGEROUS_COMMANDS
         ):  # Quick safety check
@@ -218,9 +339,16 @@ def main():
 
         print("🧠 AI is processing your request...\n")
 
+        # Choose system prompt based on provider (local models need simpler prompts)
+        system_prompt = (
+            LOCAL_MODEL_PROMPT 
+            if model_switcher.current_provider == "ollama" 
+            else SYSTEM_PROMPT
+        )
+        
         # Run the agent with feedback loop (include system prompt as first message)
         messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt},
         ]
 
@@ -230,8 +358,15 @@ def main():
 
         while retry_count < max_retries:
             try:
+                # Choose tool set based on provider (local models get simplified tools)
+                current_tools = (
+                    local_tools 
+                    if model_switcher.current_provider == "ollama" 
+                    else tools
+                )
+                
                 # Recreate agent with current model
-                agent_executor = create_react_agent(llm, tools, checkpointer=memory)
+                agent_executor = create_react_agent(llm, current_tools, checkpointer=memory)
 
                 for chunk in agent_executor.stream({"messages": messages}, config):
                     # Show agent node execution

@@ -41,7 +41,15 @@ PROVIDER_CONFIG = {
     "ollama": {
         "icon": "🏠",
         "name": "Local Ollama",
-        "loader": lambda model: ChatOllama(model=model),
+        "loader": lambda model: ChatOllama(
+            model=model,
+            temperature=0,  # Deterministic for tool calling
+            num_predict=256,  # Fast responses (llama3.1 is concise)
+            top_p=0.95,  # Balanced sampling
+            repeat_penalty=1.1,  # Prevent repetition
+            num_ctx=2048,  # Context window (enough for most tasks)
+            format="json",  # 🔧 FIX: Force JSON mode for proper tool calling!
+        ),
         "requires_api_key": False,
         "api_key": lambda: None,
     },

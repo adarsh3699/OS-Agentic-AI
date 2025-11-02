@@ -5,26 +5,26 @@ help:  ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
 install:  ## Install all dependencies
-	pip install -r requirements.txt
+	./my-env/bin/pip install -r requirements.txt
 
 run:  ## Run the AI agent
-	python run.py
+	./my-env/bin/python run.py
 
 test:  ## Run tests
-	python -m pytest tests/ -v
+	./my-env/bin/python -m pytest tests/ -v
 
 lint:  ## Run ruff linter (check for issues)
 	@echo "🔍 Running ruff linter..."
-	ruff check .
+	./my-env/bin/ruff check .
 
 format:  ## Run ruff formatter (auto-fix issues)
 	@echo "✨ Formatting code with ruff..."
-	ruff check --fix .
-	ruff format .
+	./my-env/bin/ruff check --fix .
+	./my-env/bin/ruff format .
 
 type-check:  ## Run mypy type checker
 	@echo "🔎 Running mypy type checker..."
-	mypy src/main_agent.py src/agent_tools.py src/model_loader.py src/config.py
+	./my-env/bin/mypy src/main_agent.py src/agent_tools.py src/model_switcher.py src/config.py
 
 check: lint type-check  ## Run all checks (lint + type-check)
 	@echo "✅ All checks complete!"

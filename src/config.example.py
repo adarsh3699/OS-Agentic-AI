@@ -22,21 +22,21 @@ MODEL_TIERS = {
     "small": {
         "groq": "llama-3.1-8b-instant",  # Ultra-fast, 30/min
         "gemini": "gemini-2.0-flash",  # ✅ WORKS with tools! 200 RPD
-        "ollama": "qwen2.5:14b",  # Local backup - Much smarter!
+        "ollama": "llama3.1:8b",  # 🏆 Meta's best 8B - PROPER function calling (4.9 GB)
         "use_for": ["list", "check", "simple_command"],
     },
     # Medium - Standard tasks (file organization, multi-step)
     "medium": {
         "groq": "llama-3.3-70b-versatile",  # Best model, 30/min (prioritize!)
         "gemini": "gemini-2.0-flash",  # ✅ ACTUALLY USES TOOLS! 200 RPD
-        "ollama": "qwen2.5:14b",  # Smart local fallback
+        "ollama": "llama3.1:8b",  # 🏆 Trained for tool calling - reliable (4.9 GB)
         "use_for": ["organize", "move", "create", "verify"],
     },
     # Large - Complex reasoning (debugging, error recovery)
     "large": {
         "groq": "llama-3.3-70b-versatile",  # Most capable, 30/min
         "gemini": "gemini-2.0-flash",  # ✅ Tool calling works! 200 RPD
-        "ollama": "qwen2.5:14b",  # Intelligent local model
+        "ollama": "llama3.1:8b",  # 🏆 Best local model - excellent reasoning (4.9 GB)
         "use_for": ["debug", "complex", "multi_tool"],
     },
 }
@@ -98,9 +98,9 @@ MODEL_INFO = {
         "rpm": 15,  # 2.0 - Actually works with tool calling! ✅
     },
     "ollama": {
-        "name": "Local Qwen 2.5 14B",
-        "speed": "⚡⚡⚡",
-        "reasoning": "⭐⭐⭐⭐",
+        "name": "Local Llama 3.1 8B",
+        "speed": "⚡⚡⚡⚡",
+        "reasoning": "⭐⭐⭐⭐⭐",
         "cost": "FREE (offline, unlimited)",
         "rpm": 999,
     },
