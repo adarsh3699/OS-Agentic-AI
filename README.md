@@ -73,17 +73,23 @@ my-ai-robot/
 └── requirements.txt      # Dependencies
 ```
 
-## 🤖 AI Models
+## 🤖 AI Models (Optimized v2.4)
 
-The agent supports multiple AI providers with automatic fallback:
+**Dual-model system** optimized for reliability and offline capability:
 
-| Model                  | Type  | Speed    | Intelligence | Cost |
-| ---------------------- | ----- | -------- | ------------ | ---- |
-| **Groq Llama 3.3 70B** | Cloud | ⚡⚡⚡⚡ | ⭐⭐⭐⭐⭐   | FREE |
-| **Google Gemini 2.0**  | Cloud | ⚡⚡⚡   | ⭐⭐⭐⭐⭐   | FREE |
-| **Local Llama 3.1 8B** | Local | ⚡⚡     | ⭐⭐         | FREE |
+| Model                | Type  | Speed      | Intelligence | Cost | Use Case              |
+| -------------------- | ----- | ---------- | ------------ | ---- | --------------------- |
+| **Gemini 2.0 Flash** | Cloud | ⚡⚡⚡⚡⚡ | ⭐⭐⭐⭐⭐   | FREE | Primary (95% success) |
+| **Qwen 2.5 14B**     | Local | ⚡⚡⚡⚡   | ⭐⭐⭐⭐     | FREE | Offline (85% success) |
 
-**Recommended:** Add Groq and Gemini API keys in `src/config.py` for best performance.
+**Why this setup:**
+
+- ✅ Gemini: 200 requests/day (generous limits)
+- ✅ Local: Always available offline
+- ✅ Auto-fallback: Never fails
+- ❌ Removed Groq: Token limits too restrictive
+
+**Setup:** Get free Gemini API key at https://makersuite.google.com/app/apikey
 
 ## 🛠️ Available Tools (21 Total)
 

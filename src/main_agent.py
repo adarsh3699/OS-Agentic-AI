@@ -206,17 +206,17 @@ def main():
     session = PromptSession(history=InMemoryHistory())
 
     print("=" * 70)
-    print("🤖 AGENTIC AI - v2.3 (TRULY INTELLIGENT)")
+    print("🤖 AGENTIC AI - v2.4 (OPTIMIZED)")
     print("=" * 70)
-    print("\n🧠 NEW: REAL AGENTIC BEHAVIOR")
+    print("\n🧠 TRUE AGENTIC BEHAVIOR:")
     print("   ✨ Thinks and reasons before acting")
     print("   🎯 Adapts to actual situations (no template following)")
     print("   📊 Analyzes what exists before deciding")
     print("   💡 Only creates/does what's needed")
-    print("\n🔄 DYNAMIC PROVIDER SWITCHING:")
-    print("   🚀 Auto-switches on rate limits (Groq→Gemini→Local)")
-    print("   💰 Smart model selection per task complexity")
-    print("   💾 Response caching (5 min) - saves API calls")
+    print("\n💎 OPTIMIZED FOR:")
+    print("   PRIMARY: Gemini 2.0 Flash - Excellent tool calling!")
+    print("   FALLBACK: Local Ollama (Qwen 2.5 14B recommended)")
+    print("   OFFLINE: Always works - no internet required")
     print("\n⚡ INTELLIGENT FEATURES:")
     print("   🧠 Task Planning - Creates smart plans based on observations")
     print("   🎯 Self-Critique - Evaluates work before claiming done")
@@ -225,22 +225,14 @@ def main():
     print("   🔍 Verification - Confirms every change")
     print("\n📊 System:")
     print("   • 21 Professional Tools (NEW: plan_task)")
-    print("   • Multi-Model: Groq → Gemini → Local (auto-switch!)")
+    print("   • Dual-Model: Gemini → Local (auto-switch)")
     print("   • Memory: ~/.ai_robot_memory.json")
     print("   • Mode: TRULY AGENTIC ✅")
-    print("\n💡 Watch Me Work:")
-    print("   • I'll show: Create folder → ✅ Verify → Move files → ✅ Verify")
-    print("   • I'll auto-select the right model size for each task")
-    print("   • If rate limited, I'll switch providers mid-task (no crash!)")
-    print("   • Type 'exit' to quit")
     print("\n💡 Manual Model Switching:")
     print("   • 'switch to local' - Use local Ollama model")
-    print("   • 'switch to groq' - Use Groq API")
     print("   • 'switch to gemini' - Use Gemini API")
     print("   • 'show model' - See current model")
-    print("\n" + "=" * 70)
     print("\n🧪 Test With: 'Organize my Desktop by file type'")
-    print("   (Watch me handle rate limits gracefully!)")
     print("=" * 70 + "\n")
 
     while True:
@@ -263,12 +255,6 @@ def main():
                 print("✅ Now using Local Ollama model!\n")
             continue
 
-        elif "switch to groq" in prompt_lower or "use groq" in prompt_lower:
-            print("\n🔄 Manually switching to Groq...\n")
-            llm = model_switcher._try_load_provider("groq", "", switching=True)
-            if llm:
-                print("✅ Now using Groq model!\n")
-            continue
 
         elif "switch to gemini" in prompt_lower or "use gemini" in prompt_lower:
             print("\n🔄 Manually switching to Gemini...\n")
@@ -302,9 +288,8 @@ def main():
             print("📋 AVAILABLE COMMANDS")
             print("=" * 70)
             print("\n🔄 Model Switching:")
-            print("   • switch to local   - Use local Ollama (llama3.1:8b)")
-            print("   • switch to groq    - Use Groq API (fast)")
-            print("   • switch to gemini  - Use Gemini API (reliable)")
+            print("   • switch to local   - Use local Ollama (qwen2.5:14b recommended)")
+            print("   • switch to gemini  - Use Gemini API (default, best)")
             print("   • show model        - Show current model info")
             print("\n💡 General:")
             print("   • help              - Show this help message")
@@ -314,6 +299,7 @@ def main():
             print("   • List files in my Downloads")
             print("   • Move all PDFs to Documents")
             print("   • Open Chrome browser")
+            print("\n💎 TIP: Gemini is default and works best for complex tasks!")
             print("=" * 70 + "\n")
             continue
 

@@ -4,36 +4,24 @@ Auto-switches on rate limit errors. All model loading logic in one place.
 """
 
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_groq import ChatGroq
 from langchain_ollama import ChatOllama
 
 from src import config, cost_optimizer
 
 # ============================================================================
-# PROVIDER CONFIGURATION
+# PROVIDER CONFIGURATION - OPTIMIZED FOR GEMINI + LOCAL
 # ============================================================================
 
 PROVIDER_CONFIG = {
-    "groq": {
-        "icon": "🚀",
-        "name": "Groq",
-        "loader": lambda model: ChatGroq(
-            model=model,
-            api_key=config.GROQ_API_KEY,
-            temperature=0.1,
-            max_tokens=config.MAX_TOKENS_PER_REQUEST,
-        ),
-        "requires_api_key": True,
-        "api_key": lambda: config.GROQ_API_KEY,
-    },
     "gemini": {
-        "icon": "🔷",
-        "name": "Gemini",
+        "icon": "💎",
+        "name": "Gemini 2.0",
         "loader": lambda model: ChatGoogleGenerativeAI(
             model=model,
             google_api_key=config.GEMINI_API_KEY,
-            temperature=0.1,
+            temperature=0.2,  # Optimized for tool calling
             max_tokens=config.MAX_TOKENS_PER_REQUEST,
+            # Gemini 2.0 is excellent at tool calling!
         ),
         "requires_api_key": True,
         "api_key": lambda: config.GEMINI_API_KEY,
@@ -43,12 +31,12 @@ PROVIDER_CONFIG = {
         "name": "Local Ollama",
         "loader": lambda model: ChatOllama(
             model=model,
-            temperature=0.1,  # Slightly higher for better creativity in tool calling
-            num_predict=512,  # More tokens for complex tasks
-            top_p=0.9,  # More focused sampling
-            repeat_penalty=1.15,  # Stronger penalty to prevent loops
-            num_ctx=4096,  # Larger context window for better reasoning
-            # NO format="json" - this breaks LangChain tool calling!
+            temperature=0.1,  # Lower for more deterministic tool calling
+            num_predict=512,  # Enough tokens for multi-step reasoning
+            top_p=0.9,  # Focused sampling
+            repeat_penalty=1.15,  # Prevent repetition loops
+            num_ctx=4096,  # Large context for complex tasks
+            # IMPORTANT: NO format="json" - breaks LangChain tool calling!
         ),
         "requires_api_key": False,
         "api_key": lambda: None,
