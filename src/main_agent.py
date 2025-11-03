@@ -16,6 +16,7 @@ from src.agent_tools import (
     move_mouse,
     open_app,
     open_url,
+    plan_task,
     press_key,
     read_file_content,
     recall_from_memory,
@@ -32,25 +33,24 @@ from src.agent_tools import (
 # ============================================================================
 
 # SIMPLIFIED PROMPT FOR LOCAL MODELS (Ollama) - Short and direct
-LOCAL_MODEL_PROMPT = """You are an AI assistant that CALLS TOOLS to complete tasks.
+LOCAL_MODEL_PROMPT = """You are an intelligent AI agent that analyzes situations and makes smart decisions.
 
-CRITICAL RULES:
-1. ALWAYS use ~/Desktop for Desktop path (NEVER use /path/to/Desktop)
-2. GROUP related file types (Images: jpg+jpeg+png, Documents: pdf+doc+txt)
-3. BATCH commands - create all folders at once, move files with &&
-4. Call 3-5 tools total, then STOP
+CORE PRINCIPLES:
+1. ANALYZE FIRST - Look before you act
+2. ADAPT - Only do what's needed for THIS situation
+3. BE EFFICIENT - Batch related operations
+4. VERIFY - Check your work
 
-🧠 SMART FILE GROUPING:
-- Images/ → .jpg, .jpeg, .png, .gif, .bmp
-- Documents/ → .pdf, .doc, .docx, .txt
-- Videos/ → .mp4, .mov, .avi, .mkv
-- Audio/ → .mp3, .wav, .flac
+When organizing files:
+1. List directory to see what's actually there
+2. Identify file types that exist (don't assume)
+3. Create ONLY folders needed for files you found
+4. Move files efficiently
+5. Verify the result
 
-Example Task: "Organize Desktop"
-Step 1: list_directory("~/Desktop") → see: file.jpg, pic.jpeg, doc.pdf
-Step 2: execute_terminal_command("mkdir ~/Desktop/Images ~/Desktop/Documents")
-Step 3: execute_terminal_command("mv ~/Desktop/*.jpg ~/Desktop/Images && mv ~/Desktop/*.jpeg ~/Desktop/Images && mv ~/Desktop/*.pdf ~/Desktop/Documents")
-Step 4: STOP and say "Done! Organized into Images and Documents"
+Example: If Desktop has only .jpg and .pdf files:
+- Create ONLY Images/ and Documents/ folders
+- DON'T create Videos/, Audio/, Archives/ (no files to put there!)
 
 Available tools:
 - list_directory(directory_path="~/Desktop")
@@ -60,103 +60,80 @@ Available tools:
 - open_app(app_name="Chrome")
 - open_url(url="https://...")"""
 
-# FULL PROMPT FOR CLOUD MODELS (Groq/Gemini) - Detailed with examples
-SYSTEM_PROMPT = """🚨 CRITICAL RULES:
+# FULL PROMPT FOR CLOUD MODELS (Groq/Gemini) - Principle-based, not prescriptive
+SYSTEM_PROMPT = """You are an intelligent AI agent with access to computer control tools.
 
-1. PLAN FIRST - Analyze the task, group related operations
-2. BATCH OPERATIONS - Combine similar actions into single commands
-3. USE SMART CATEGORIES - Group related file types logically
-4. VERIFY ONCE - Check results at the end, not after every step
+🧠 CORE PRINCIPLES - Think like a human:
 
-🧠 INTELLIGENT FILE CATEGORIZATION:
+1. **ANALYZE FIRST** - Understand the situation before acting
+   - What files/folders actually exist?
+   - What does the user really need?
+   - What's the minimal set of actions required?
 
-When organizing files, USE SMART CATEGORIES (not one folder per extension):
+2. **ADAPT TO REALITY** - Don't follow templates blindly
+   - Create folders ONLY for file types that exist
+   - Don't assume what files are there
+   - Every situation is unique - think about THIS situation
 
-✅ SMART GROUPING:
-- Images/ → .jpg, .jpeg, .png, .gif, .bmp, .svg, .webp
-- Documents/ → .pdf, .doc, .docx, .txt, .rtf, .odt
-- Videos/ → .mp4, .mov, .avi, .mkv, .webm, .flv
-- Audio/ → .mp3, .wav, .flac, .aac, .ogg, .m4a
-- Archives/ → .zip, .rar, .7z, .tar, .gz
+3. **BE EFFICIENT** - Work smart, not hard
+   - Batch similar operations when it makes sense
+   - Don't over-engineer simple tasks
+   - Use the right tool for the job
 
-❌ WRONG: Create JPG/, JPEG/, PNG/ (too many folders!)
-✅ RIGHT: Create Images/ for all image formats
+4. **VERIFY YOUR WORK** - Check if you achieved the goal
+   - Did you complete what was asked?
+   - Are the results correct?
+   - Should you do anything else?
 
-⚡ UNIVERSAL OPTIMIZATION PRINCIPLES:
+🎯 AGENTIC BEHAVIOR:
 
-For ANY task, follow this pattern:
-1. GATHER INFO - Call tools to see current state
-2. PLAN - Decide what needs to happen
-3. BATCH - Combine related operations
-4. EXECUTE - Run batched commands
-5. VERIFY - Check final result
+You are NOT a script executor. You are an intelligent agent that:
+- Reasons about the task
+- Makes decisions based on actual data
+- Adapts approach based on what you discover
+- Only does what's necessary
 
-Examples: 
+Example - File Organization:
+❌ BAD (Template following):
+  "I'll create Images/, Documents/, Videos/, Audio/, Archives/"
+  → Creates 5 folders regardless of what files exist
 
-📁 File Organization:
-1. list_directory once → see all files
-2. Group by category (Images, Documents, etc)
-3. mkdir all folders in one command
-4. mv all files with && chains
-5. verify once
+✅ GOOD (Intelligent reasoning):
+  1. List directory to see what's there
+  2. "I see 3 JPGs, 2 PDFs, 1 MP4"
+  3. "I need: Images/ for JPGs, Documents/ for PDFs, Videos/ for MP4"
+  4. Create ONLY those 3 folders
+  5. Move files into them
+  6. Verify it worked
 
-📝 Multi-file Processing:
-1. list_directory → find target files
-2. Plan operations (read, modify, write)
-3. Batch process with loops/scripts
-4. Execute combined command
-5. verify results
+🛠️ AVAILABLE TOOLS:
 
-🔍 Search & Replace:
-1. search_file → find targets
-2. Plan all replacements
-3. Batch with sed/awk commands
-4. Execute once
-5. verify changes
-
-You are an INTELLIGENT AI assistant. You GROUP logically, BATCH efficiently, and VERIFY once.
-
-📋 BATCHING COMMANDS:
-
-Use shell operators to combine commands:
-- `&&` - Run commands in sequence: "mkdir folder && mv files folder"
-- Multiple args - Create multiple folders: "mkdir folder1 folder2 folder3"
-
-Example:
-❌ SLOW: 3 separate calls
-  execute_terminal_command("mkdir ~/Desktop/Photos")
-  execute_terminal_command("mkdir ~/Desktop/Documents")
-  execute_terminal_command("mkdir ~/Desktop/Videos")
-
-✅ FAST: 1 combined call
-  execute_terminal_command("mkdir ~/Desktop/Photos ~/Desktop/Documents ~/Desktop/Videos")
-
-⚠️ TOOL USAGE RULES:
-
-1. Use execute_terminal_command() for mkdir, mv, cp, rm
-2. Use list_directory() to see folder contents
-3. BATCH commands when possible (mkdir multiple folders at once)
-4. Verify ONCE at the end, not after every step
-
-🧰 AVAILABLE TOOLS:
-
-**File Operations (Most Used):**
-- list_directory(directory_path) - See folder contents
-- execute_terminal_command(command) - Run ANY shell command (mkdir, mv, etc)
-- read_file_content(filepath) - Read files
+**File Operations:**
+- list_directory(directory_path) - See what files/folders exist
+- execute_terminal_command(command) - Run shell commands
+- read_file_content(filepath) - Read file contents
+- get_current_directory() - Get current location
 
 **Computer Control:**
 - move_mouse, click_mouse, type_text, press_key
 - open_app, open_url, check_running_apps
 
 **Advanced:**
-- Memory: save_to_memory, recall_from_memory
-- Debug: take_screenshot, debug_last_error
-- Verification: verify_expectations, self_critique
+- plan_task - Create intelligent plans based on actual observations
+- save_to_memory, recall_from_memory - Learn across sessions
+- take_screenshot, get_screen_info - Visual debugging
+- verify_expectations, self_critique - Self-awareness
+- debug_last_error - Error recovery
 
-Work efficiently, batch operations, and verify once at the end. 🎯"""
+💡 KEY WORKFLOW:
+1. Use list_directory() to see what's actually there
+2. Use plan_task() to create a smart plan based on observations
+3. Execute only what's needed
+4. Verify your work
 
-# List of all tools (20 total - Professional Grade!)
+💡 REMEMBER: You're intelligent. Think, reason, adapt. Don't blindly follow patterns."""
+
+# List of all tools (21 total - Professional Grade!)
 tools = [
     # Computer control (8 tools)
     move_mouse,
@@ -172,7 +149,8 @@ tools = [
     get_current_directory,
     read_file_content,
     list_directory,
-    # Professional features (8 tools)
+    # Professional features (9 tools)
+    plan_task,  # NEW: Intelligent planning before action
     self_critique,
     verify_expectations,  # Self-awareness
     save_to_memory,
@@ -223,29 +201,28 @@ def main():
     session = PromptSession(history=InMemoryHistory())
 
     print("=" * 70)
-    print("🤖 CURSOR-STYLE AI - v2.2 (AUTO-SWITCHING)")
+    print("🤖 AGENTIC AI - v2.3 (TRULY INTELLIGENT)")
     print("=" * 70)
-    print("\n🎯 NEW: DYNAMIC PROVIDER SWITCHING")
-    print("   🔄 Auto-switches providers on rate limits (Groq→Gemini→Local)")
-    print("   💰 Auto-selects optimal model (8B/11B/70B) per task")
-    print("   💾 Caches responses for 5 minutes (FREE repeats!)")
-    print("   ⚡ 50-70% cost reduction with ZERO accuracy loss")
-    print("\n🎯 STEP-BY-STEP VERIFICATION (Like Cursor AI)")
-    print("   ✅ Verifies EVERY action before proceeding")
-    print("   ✅ Shows: Step 1 → Verify → Step 2 → Verify → Done")
-    print("   ✅ Won't skip steps or claim done prematurely")
-    print("   ✅ Checks both source AND destination after moves")
-    print("\n⚡ PROFESSIONAL FEATURES:")
-    print("   🧠 Self-Critique - Evaluates before claiming 'done'")
+    print("\n🧠 NEW: REAL AGENTIC BEHAVIOR")
+    print("   ✨ Thinks and reasons before acting")
+    print("   🎯 Adapts to actual situations (no template following)")
+    print("   📊 Analyzes what exists before deciding")
+    print("   💡 Only creates/does what's needed")
+    print("\n🔄 DYNAMIC PROVIDER SWITCHING:")
+    print("   🚀 Auto-switches on rate limits (Groq→Gemini→Local)")
+    print("   💰 Smart model selection per task complexity")
+    print("   💾 Response caching (5 min) - saves API calls")
+    print("\n⚡ INTELLIGENT FEATURES:")
+    print("   🧠 Task Planning - Creates smart plans based on observations")
+    print("   🎯 Self-Critique - Evaluates work before claiming done")
     print("   💾 Persistent Memory - Learns across sessions")
-    print("   🔧 Error Recovery - 5+ fallback strategies")
-    print("   🔍 Multi-Level Verification - Confirms every change")
-    print("   🔄 Runtime Provider Switching - Never crashes on rate limits!")
+    print("   🔧 Error Recovery - Multiple fallback strategies")
+    print("   🔍 Verification - Confirms every change")
     print("\n📊 System:")
-    print("   • 20 Professional Tools")
+    print("   • 21 Professional Tools (NEW: plan_task)")
     print("   • Multi-Model: Groq → Gemini → Local (auto-switch!)")
     print("   • Memory: ~/.ai_robot_memory.json")
-    print("   • Mode: AUTO-SWITCHING + COST OPTIMIZED ✅")
+    print("   • Mode: TRULY AGENTIC ✅")
     print("\n💡 Watch Me Work:")
     print("   • I'll show: Create folder → ✅ Verify → Move files → ✅ Verify")
     print("   • I'll auto-select the right model size for each task")
@@ -270,38 +247,38 @@ def main():
         if prompt.lower() == "exit":
             print("👋 Goodbye!")
             break
-        
+
         # Handle manual model switching commands
         prompt_lower = prompt.lower().strip()
-        
+
         if "switch to local" in prompt_lower or "use local" in prompt_lower:
             print("\n🔄 Manually switching to Local (Ollama)...\n")
             llm = model_switcher._try_load_provider("ollama", "", switching=True)
             if llm:
                 print("✅ Now using Local Ollama model!\n")
             continue
-        
+
         elif "switch to groq" in prompt_lower or "use groq" in prompt_lower:
             print("\n🔄 Manually switching to Groq...\n")
             llm = model_switcher._try_load_provider("groq", "", switching=True)
             if llm:
                 print("✅ Now using Groq model!\n")
             continue
-        
+
         elif "switch to gemini" in prompt_lower or "use gemini" in prompt_lower:
             print("\n🔄 Manually switching to Gemini...\n")
             llm = model_switcher._try_load_provider("gemini", "", switching=True)
             if llm:
                 print("✅ Now using Gemini model!\n")
             continue
-        
+
         elif "show model" in prompt_lower or "current model" in prompt_lower or "which model" in prompt_lower:
             current = model_switcher.current_provider
             if current:
                 info = config.MODEL_INFO[current]
                 tier = config.DEFAULT_TIER
                 model_name = config.MODEL_TIERS[tier][current]
-                print(f"\n📊 Current Model:")
+                print("\n📊 Current Model:")
                 print(f"   Provider: {current.upper()}")
                 print(f"   Name: {info['name']}")
                 print(f"   Model: {model_name}")
@@ -310,7 +287,7 @@ def main():
             else:
                 print("\n⚠️  No model loaded yet\n")
             continue
-        
+
         elif prompt_lower in ["help", "commands", "?", "help me"]:
             print("\n" + "=" * 70)
             print("📋 AVAILABLE COMMANDS")
@@ -330,7 +307,7 @@ def main():
             print("   • Open Chrome browser")
             print("=" * 70 + "\n")
             continue
-        
+
         if not all(
             danger.lower() not in prompt.lower() for danger in DANGEROUS_COMMANDS
         ):  # Quick safety check
@@ -341,11 +318,11 @@ def main():
 
         # Choose system prompt based on provider (local models need simpler prompts)
         system_prompt = (
-            LOCAL_MODEL_PROMPT 
-            if model_switcher.current_provider == "ollama" 
+            LOCAL_MODEL_PROMPT
+            if model_switcher.current_provider == "ollama"
             else SYSTEM_PROMPT
         )
-        
+
         # Run the agent with feedback loop (include system prompt as first message)
         messages = [
             {"role": "system", "content": system_prompt},
@@ -360,11 +337,11 @@ def main():
             try:
                 # Choose tool set based on provider (local models get simplified tools)
                 current_tools = (
-                    local_tools 
-                    if model_switcher.current_provider == "ollama" 
+                    local_tools
+                    if model_switcher.current_provider == "ollama"
                     else tools
                 )
-                
+
                 # Recreate agent with current model
                 agent_executor = create_react_agent(llm, current_tools, checkpointer=memory)
 

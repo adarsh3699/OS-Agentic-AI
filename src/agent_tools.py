@@ -263,7 +263,8 @@ def read_file_content(filepath: str, max_lines: int = 50):
 @tool
 def list_directory(directory_path: str):
     """Lists all files and folders in a directory with details (size, type, name).
-    Much better than 'ls' for understanding what's in a folder.
+    ALWAYS use this FIRST when organizing files - you need to see what actually exists!
+    Don't assume what files are there - LOOK first, then decide what to do.
     Example: list_directory('~/Desktop')"""
     if not is_safe(directory_path):
         return "🚫 Unsafe path blocked."
@@ -273,23 +274,107 @@ def list_directory(directory_path: str):
             return f"❌ Directory not found: {directory_path}"
 
         items = []
+        file_types = {}  # Track what file types exist
+
         for item in os.listdir(path):
             item_path = os.path.join(path, item)
             if os.path.isfile(item_path):
                 size = os.path.getsize(item_path)
-                ext = os.path.splitext(item)[1]
+                ext = os.path.splitext(item)[1].lower()
                 items.append(f"📄 {item} ({ext}, {size} bytes)")
+                # Track file extensions
+                if ext:
+                    file_types[ext] = file_types.get(ext, 0) + 1
             elif os.path.isdir(item_path):
                 items.append(f"📁 {item}/")
 
         if not items:
             return f"📂 Directory {directory_path} is empty"
 
-        return f"📂 Contents of {directory_path}:\n" + "\n".join(items)
+        result = f"📂 Contents of {directory_path}:\n" + "\n".join(items)
+
+        # Add intelligence: show summary of file types
+        if file_types:
+            result += "\n\n📊 File types found: "
+            result += ", ".join([f"{count} {ext}" for ext, count in sorted(file_types.items())])
+
+        return result
     except PermissionError:
         return f"❌ Permission denied: {directory_path}"
     except Exception as e:
         return f"❌ Error listing directory: {str(e)}"
+
+
+@tool
+def plan_task(task_description: str, observations: str = ""):
+    """Create a smart plan BEFORE taking action. Use this to think through your approach.
+
+    This tool helps you:
+    - Break down the task into logical steps
+    - Identify what information you need
+    - Decide which tools to use and in what order
+    - Avoid unnecessary actions
+
+    Args:
+        task_description: What the user asked you to do
+        observations: What you've learned so far (e.g., "Desktop has 3 JPGs, 2 PDFs")
+
+    Returns: A structured plan with reasoning
+
+    Example:
+        plan_task(
+            "Organize Desktop by file type",
+            "Desktop has: 3 .jpg files, 2 .pdf files, 1 .mp4 file"
+        )
+    """
+    plan = f"""
+🎯 TASK PLANNING ANALYSIS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 User Request: {task_description}
+
+🔍 Current Observations:
+{observations if observations else "   (No observations yet - need to gather info first)"}
+
+💡 INTELLIGENT ANALYSIS:
+"""
+
+    if observations:
+        # Parse what file types exist
+        plan += "\n   Based on what I see, I should:\n"
+        plan += "   1. Only create folders for file types that ACTUALLY exist\n"
+        plan += "   2. Don't create empty folders that won't be used\n"
+        plan += "   3. Group similar file types logically\n"
+        plan += "\n   Recommended actions:\n"
+
+        # Suggest folder categories based on common patterns
+        if any(ext in observations.lower() for ext in [".jpg", ".jpeg", ".png", ".gif"]):
+            plan += "   → Create 'Images' folder (for image files)\n"
+        if any(ext in observations.lower() for ext in [".pdf", ".doc", ".txt"]):
+            plan += "   → Create 'Documents' folder (for document files)\n"
+        if any(ext in observations.lower() for ext in [".mp4", ".mov", ".avi"]):
+            plan += "   → Create 'Videos' folder (for video files)\n"
+        if any(ext in observations.lower() for ext in [".mp3", ".wav", ".flac"]):
+            plan += "   → Create 'Audio' folder (for audio files)\n"
+        if any(ext in observations.lower() for ext in [".zip", ".rar", ".7z"]):
+            plan += "   → Create 'Archives' folder (for compressed files)\n"
+
+        plan += "\n   ⚠️  DON'T create folders for file types that don't exist!\n"
+    else:
+        plan += "\n   Step 1: GATHER INFORMATION\n"
+        plan += "   → Use list_directory() to see what files exist\n"
+        plan += "   → Analyze the file types present\n"
+        plan += "\n   Step 2: CREATE SMART PLAN\n"
+        plan += "   → Call plan_task() again with observations\n"
+        plan += "   → Decide which folders are actually needed\n"
+
+    plan += """
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Remember: Adapt to the actual situation. Think, don't template-follow!
+"""
+
+    return plan
 
 
 @tool
