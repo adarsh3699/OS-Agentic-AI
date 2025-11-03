@@ -32,33 +32,38 @@ from src.agent_tools import (
 # SYSTEM PROMPTS - Different prompts for different model types
 # ============================================================================
 
-# SIMPLIFIED PROMPT FOR LOCAL MODELS (Ollama) - Short and direct
-LOCAL_MODEL_PROMPT = """You are an intelligent AI agent that analyzes situations and makes smart decisions.
+# OPTIMIZED PROMPT FOR LOCAL MODELS - Action-oriented, not descriptive
+LOCAL_MODEL_PROMPT = """You control the computer by CALLING TOOLS. Don't describe actions - DO THEM!
 
-CORE PRINCIPLES:
-1. ANALYZE FIRST - Look before you act
-2. ADAPT - Only do what's needed for THIS situation
-3. BE EFFICIENT - Batch related operations
-4. VERIFY - Check your work
+RULES:
+1. When you see files, CREATE folders for those types ONLY
+2. Use execute_terminal_command() to run commands
+3. ALWAYS call tools, NEVER just describe what to do
 
-When organizing files:
-1. List directory to see what's actually there
-2. Identify file types that exist (don't assume)
-3. Create ONLY folders needed for files you found
-4. Move files efficiently
-5. Verify the result
+FILE TYPE → FOLDER:
+.jpg, .jpeg, .png → Images/
+.pdf, .doc, .txt → Documents/
+.mp4, .mov, .avi → Videos/
 
-Example: If Desktop has only .jpg and .pdf files:
-- Create ONLY Images/ and Documents/ folders
-- DON'T create Videos/, Audio/, Archives/ (no files to put there!)
+EXAMPLE - "Organize Desktop":
+
+User: "Organize Desktop by file type"
+You already called: list_directory("~/Desktop")
+Result: "2 .jpg, 3 .pdf, 1 .mp4"
+
+NOW DO THIS (actually call these tools):
+1. execute_terminal_command("mkdir ~/Desktop/Images ~/Desktop/Documents ~/Desktop/Videos")
+2. execute_terminal_command("mv ~/Desktop/*.jpg ~/Desktop/*.jpeg ~/Desktop/Images")
+3. execute_terminal_command("mv ~/Desktop/*.pdf ~/Desktop/Documents")
+4. execute_terminal_command("mv ~/Desktop/*.mp4 ~/Desktop/Videos")
+
+DON'T say "Step 1: Call X" - ACTUALLY CALL X!
 
 Available tools:
-- list_directory(directory_path="~/Desktop")
-- execute_terminal_command(command="mkdir ~/Desktop/folder")
-- read_file_content(filepath="~/file.txt")
-- get_current_directory()
-- open_app(app_name="Chrome")
-- open_url(url="https://...")"""
+- list_directory(directory_path)
+- execute_terminal_command(command)
+- open_app(app_name)
+- read_file_content(filepath)"""
 
 # FULL PROMPT FOR CLOUD MODELS (Groq/Gemini) - Principle-based, not prescriptive
 SYSTEM_PROMPT = """You are an intelligent AI agent with access to computer control tools.
@@ -272,7 +277,11 @@ def main():
                 print("✅ Now using Gemini model!\n")
             continue
 
-        elif "show model" in prompt_lower or "current model" in prompt_lower or "which model" in prompt_lower:
+        elif (
+            "show model" in prompt_lower
+            or "current model" in prompt_lower
+            or "which model" in prompt_lower
+        ):
             current = model_switcher.current_provider
             if current:
                 info = config.MODEL_INFO[current]
@@ -318,9 +327,7 @@ def main():
 
         # Choose system prompt based on provider (local models need simpler prompts)
         system_prompt = (
-            LOCAL_MODEL_PROMPT
-            if model_switcher.current_provider == "ollama"
-            else SYSTEM_PROMPT
+            LOCAL_MODEL_PROMPT if model_switcher.current_provider == "ollama" else SYSTEM_PROMPT
         )
 
         # Run the agent with feedback loop (include system prompt as first message)
@@ -337,9 +344,7 @@ def main():
             try:
                 # Choose tool set based on provider (local models get simplified tools)
                 current_tools = (
-                    local_tools
-                    if model_switcher.current_provider == "ollama"
-                    else tools
+                    local_tools if model_switcher.current_provider == "ollama" else tools
                 )
 
                 # Recreate agent with current model

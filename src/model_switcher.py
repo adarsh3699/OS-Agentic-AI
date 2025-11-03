@@ -43,12 +43,12 @@ PROVIDER_CONFIG = {
         "name": "Local Ollama",
         "loader": lambda model: ChatOllama(
             model=model,
-            temperature=0,  # Deterministic for tool calling
-            num_predict=256,  # Fast responses (llama3.1 is concise)
-            top_p=0.95,  # Balanced sampling
-            repeat_penalty=1.1,  # Prevent repetition
-            num_ctx=2048,  # Context window (enough for most tasks)
-            format="json",  # 🔧 FIX: Force JSON mode for proper tool calling!
+            temperature=0.1,  # Slightly higher for better creativity in tool calling
+            num_predict=512,  # More tokens for complex tasks
+            top_p=0.9,  # More focused sampling
+            repeat_penalty=1.15,  # Stronger penalty to prevent loops
+            num_ctx=4096,  # Larger context window for better reasoning
+            # NO format="json" - this breaks LangChain tool calling!
         ),
         "requires_api_key": False,
         "api_key": lambda: None,

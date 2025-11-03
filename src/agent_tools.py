@@ -48,7 +48,7 @@ def move_mouse(x: int, y: int, human_like: bool = True):
             # Add slight randomness to make it more natural
             target_x = x + random.uniform(-5, 5)
             target_y = y + random.uniform(-5, 5)
-            
+
             # Create more points for smooth curve (need at least 4 for cubic spline)
             points = np.array(
                 [
