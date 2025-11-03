@@ -45,19 +45,27 @@ def move_mouse(x: int, y: int, human_like: bool = True):
     try:
         current_x, current_y = pyautogui.position()
         if human_like:
-            x += random.uniform(-5, 5)
-            y += random.uniform(-5, 5)
+            # Add slight randomness to make it more natural
+            target_x = x + random.uniform(-5, 5)
+            target_y = y + random.uniform(-5, 5)
+            
+            # Create more points for smooth curve (need at least 4 for cubic spline)
             points = np.array(
                 [
                     [current_x, current_y],
                     [
-                        current_x + (x - current_x) / 2 + random.uniform(-50, 50),
-                        current_y + (y - current_y) / 2,
+                        current_x + (target_x - current_x) * 0.3 + random.uniform(-30, 30),
+                        current_y + (target_y - current_y) * 0.3 + random.uniform(-20, 20),
                     ],
-                    [x, y],
+                    [
+                        current_x + (target_x - current_x) * 0.7 + random.uniform(-20, 20),
+                        current_y + (target_y - current_y) * 0.7 + random.uniform(-10, 10),
+                    ],
+                    [target_x, target_y],
                 ]
             )
-            tck, u = splprep(points.T, s=0)
+            # Use k=2 (quadratic) for more stability with fewer points
+            tck, u = splprep(points.T, s=0, k=2)
             u_new = np.linspace(0, 1, 20)
             path = splev(u_new, tck)
             for px, py in zip(*path):
